@@ -43,4 +43,11 @@ public class PlayerController : MonoBehaviour
  // Apply force to the Rigidbody to move the player.
         rb.AddForce(movement * speed); 
     }
+void OnTriggerEnter(Collider other)
+    {
+        if(other.gameObject.CompareTag("PickUp"))
+        {
+            other.gameObject.SetActive(false);
+        }
+    }
 }
