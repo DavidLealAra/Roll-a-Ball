@@ -4,95 +4,95 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    // Reference to the player GameObject.
+    // Referencia al GameObject del jugador.
     public GameObject player;
 
-    // The distance between the camera and the player in third-person view.
+    // La distancia entre la cámara y el jugador en vista de tercera persona.
     private Vector3 offset;
 
-    // Toggle for switching between first-person and third-person views.
+    // Alternador para cambiar entre vistas de primera persona y tercera persona.
     private bool isFirstPerson = false;
 
-    // Adjustment for the first-person camera height.
+    // Ajuste para la altura de la cámara en primera persona.
     public float firstPersonHeight = 0.5f;
 
-    // Mouse sensitivity for rotating the camera in first-person view.
+    // Sensibilidad del ratón para rotar la cámara en vista de primera persona.
     public float mouseSensitivity = 100f;
 
-    // Speed of the player's movement.
+    // Velocidad de movimiento del jugador.
     public float movementSpeed = 5f;
 
-    // Variables to store camera rotation in first-person view.
-    private float xRotation = 0f; // Vertical rotation
-    private float yRotation = 0f; // Horizontal rotation
+    // Variables para almacenar la rotación de la cámara en vista de primera persona.
+    private float xRotation = 0f; // Rotación vertical
+    private float yRotation = 0f; // Rotación horizontal
 
-    // Rigidbody for the player's movement.
+    // Rigidbody para el movimiento del jugador.
     private Rigidbody playerRigidbody;
 
-    // Start is called before the first frame update.
+    // Start se llama antes de la primera actualización del frame.
     void Start()
     {
-        // Calculate the initial offset for third-person view.
+        // Calcula el desplazamiento inicial para la vista de tercera persona.
         offset = transform.position - player.transform.position;
 
-        // Lock the cursor to the center of the screen in first-person mode.
+        // Bloquea el cursor en el centro de la pantalla en modo de primera persona.
         Cursor.lockState = CursorLockMode.Locked;
 
-        // Get the Rigidbody component of the player.
+        // Obtiene el componente Rigidbody del jugador.
         playerRigidbody = player.GetComponent<Rigidbody>();
     }
 
-    // Update is called once per frame
+    // Update se llama una vez por frame.
     void Update()
     {
-        // Toggle between first-person and third-person views using the "F" key.
+        // Alterna entre las vistas de primera persona y tercera persona con la tecla "F".
         if (Input.GetKeyDown(KeyCode.F))
         {
             isFirstPerson = !isFirstPerson;
 
-            // Lock or unlock the cursor depending on the view.
+            // Bloquea o desbloquea el cursor según la vista.
             Cursor.lockState = isFirstPerson ? CursorLockMode.Locked : CursorLockMode.None;
         }
 
         if (isFirstPerson)
         {
-            // Get mouse input to rotate the camera.
+            // Obtiene la entrada del ratón para rotar la cámara.
             float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
             float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
 
-            // Adjust the vertical rotation and clamp it to avoid flipping.
+            // Ajusta la rotación vertical y la limita para evitar que se voltee.
             xRotation -= mouseY;
             xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 
-            // Adjust the horizontal rotation.
+            // Ajusta la rotación horizontal.
             yRotation += mouseX;
 
-            // Apply rotations to the camera.
+            // Aplica las rotaciones a la cámara.
             transform.localRotation = Quaternion.Euler(xRotation, yRotation, 0f);
         }
     }
 
-    // FixedUpdate is called for physics updates.
+    // FixedUpdate se llama para actualizaciones físicas.
     void FixedUpdate()
     {
         if (isFirstPerson)
         {
-            // Handle player movement in first-person mode.
+            // Maneja el movimiento del jugador en modo de primera persona.
             HandleFirstPersonMovement();
         }
     }
 
-    // LateUpdate is called once per frame after all Update functions have been completed.
+    // LateUpdate se llama una vez por frame después de que todas las funciones Update se hayan completado.
     void LateUpdate()
     {
         if (isFirstPerson)
         {
-            // First-person view: Place the camera slightly above the player.
+            // Vista de primera persona: Coloca la cámara ligeramente por encima del jugador.
             transform.position = player.transform.position + new Vector3(0, firstPersonHeight, 0);
         }
         else
         {
-            // Third-person view: Maintain the initial offset without inheriting rotation.
+            // Vista de tercera persona: Mantén el desplazamiento inicial sin heredar la rotación.
             transform.position = player.transform.position + offset;
             transform.LookAt(player.transform.position);
         }
@@ -100,25 +100,24 @@ public class CameraController : MonoBehaviour
 
     private void HandleFirstPersonMovement()
     {
-        // Get input for movement.
+        // Obtiene la entrada para el movimiento.
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
 
-        // Calculate the forward and right directions based on the camera's rotation.
+        // Calcula las direcciones hacia adelante y a la derecha basadas en la rotación de la cámara.
         Vector3 forward = transform.forward;
         Vector3 right = transform.right;
 
-        // Flatten the forward and right vectors to ignore vertical rotation.
+        // Aplana los vectores forward y right para ignorar la rotación vertical.
         forward.y = 0;
         right.y = 0;
         forward.Normalize();
         right.Normalize();
 
-        // Calculate the movement direction.
+        // Calcula la dirección del movimiento.
         Vector3 movementDirection = (forward * moveVertical + right * moveHorizontal).normalized;
 
-        // Apply the velocity directly to the player's Rigidbody.
+        // Aplica la velocidad directamente al Rigidbody del jugador.
         playerRigidbody.velocity = movementDirection * movementSpeed + new Vector3(0, playerRigidbody.velocity.y, 0);
     }
 }
-
