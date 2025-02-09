@@ -4,10 +4,12 @@ using UnityEngine;
 
 public class Rotator : MonoBehaviour
 {
-    // Update se llama una vez por frame.
+
+    // Update is called once per frame
     void Update()
     {
-        // Rota el objeto en los ejes X, Y y Z con una velocidad proporcional al tiempo delta.
-        transform.Rotate(new Vector3(15, 30, 45) * Time.deltaTime);
+
+    transform.Rotate (new Vector3 (0, 0, 45) * Time.deltaTime);
+        
     }
 }

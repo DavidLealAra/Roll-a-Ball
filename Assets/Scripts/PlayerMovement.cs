@@ -1,87 +1,160 @@
 using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
-    // Rigidbody del jugador.
-    private Rigidbody rb; 
-
-    // Movimiento a lo largo de los ejes X e Y.
+    private Rigidbody rb;
+    private int count;
     private float movementX;
     private float movementY;
-
-    // Velocidad a la que se mueve el jugador.
-    public float speed = 0; 
-
-    public TextMeshProUGUI Score;
-
-    private int count;
+    public float speed = 0;
+    public TextMeshProUGUI countText;
+    public GameObject winTextObject;
+    
+    public GameObject enemy;
+    public GameObject enemy2;
 
     public GameObject P_transparente;
+    public GameObject P_transparente_2;
 
-    public GameObject winTextObject;
+    public GameObject gameOverText;
 
-    // Start se llama antes de la primera actualización del frame.
+    private bool isInvulnerable = false;
+    private bool hasTeleported = false;
+    private Renderer playerRenderer;
+
+    public Transform teleportDestination; // 🔹 Punto al que se teletransportará el jugador
+
     void Start()
     {
-        // Obtiene y almacena el componente Rigidbody adjunto al jugador.
         rb = GetComponent<Rigidbody>();
         count = 0;
-        SetScore();
         winTextObject.SetActive(false);
+        gameOverText.SetActive(false);
+        playerRenderer = GetComponent<Renderer>();
     }
- 
-    // Esta función se llama cuando se detecta una entrada de movimiento.
+
     void OnMove(InputValue movementValue)
     {
-        // Convierte el valor de entrada en un Vector2 para el movimiento.
         Vector2 movementVector = movementValue.Get<Vector2>();
-
-        // Almacena los componentes X e Y del movimiento.
-        movementX = movementVector.x; 
-        movementY = movementVector.y; 
+        movementX = movementVector.x;
+        movementY = movementVector.y;
     }
- void SetScore() 
-    {
- // Update the count text with the current count.
-        Score.text = "Score: " + count.ToString();
 
- // Check if the count has reached or exceeded the win condition.
- if (count >= 4)
+void SetCountText()
+{
+    countText.text = "Score: " + count.ToString();
+
+    // 🔹 PRIMERA VICTORIA (antes de teletransportarse)  
+    if (count == 5 && !hasTeleported)  
+    {
+        winTextObject.SetActive(true);
+        if (enemy != null)
         {
- // Display the win text.
-            winTextObject.SetActive(true);
+            enemy.SetActive(false);
         }
     }
 
-    // FixedUpdate se llama una vez por frame de tasa fija.
-    private void FixedUpdate() 
+    // 🔹 VICTORIA FINAL (después del teletransporte)
+    if (count == 4 && hasTeleported)  
     {
-        // Crea un vector de movimiento en 3D utilizando las entradas X e Y.
-        Vector3 movement = new Vector3(movementX, 0.0f, movementY);
+        winTextObject.SetActive(true);
+        if (enemy2 != null)
+        {
+            enemy2.SetActive(false);
+        }
+        StartCoroutine(RestartGame()); // Reiniciar el juego después de ganar
+    }
+}
 
-        // Aplica una fuerza al Rigidbody para mover al jugador.
-        rb.AddForce(movement * speed); 
+    private void FixedUpdate()
+    {
+        Vector3 movement = new Vector3(movementX, 0.0f, movementY);
+        rb.AddForce(movement * speed);
     }
 
-    // Se llama cuando el jugador entra en contacto con otro Collider.
     void OnTriggerEnter(Collider other)
     {
-        // Si el objeto en contacto tiene la etiqueta "PickUp".
         if (other.gameObject.CompareTag("PickUp"))
         {
-            // Desactiva el objeto al que se ha hecho contacto.
             other.gameObject.SetActive(false);
-            count = count + 1;
-            SetScore();
+            count++;
+            SetCountText();
+
             if (count >= 1)
-             {
+            {
                 P_transparente.SetActive(false);
-              }
+            }
+            if (count >= 5)
+            {
+                P_transparente_2.SetActive(false);
+            }
+
+            StartCoroutine(Invulnerability());
+        }
+
+        // 🔹 Teletransporte cuando toque un objeto con la etiqueta "TeleportZone"
+        if (other.gameObject.CompareTag("TeleportZone"))
+        {
+            TeleportPlayer();
         }
     }
+
+    IEnumerator Invulnerability()
+    {
+        isInvulnerable = true;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < 1f)
+        {
+            playerRenderer.enabled = !playerRenderer.enabled;
+            yield return new WaitForSeconds(0.1f);
+            elapsedTime += 0.1f;
+        }
+
+        playerRenderer.enabled = true;
+        isInvulnerable = false;
+    }
+
+    public void GameOver()
+    {
+        gameOverText.SetActive(true);
+        StartCoroutine(RestartGame());
+    }
+
+    IEnumerator RestartGame()
+    {
+        yield return new WaitForSeconds(2f);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public bool IsInvulnerable()
+    {
+        return isInvulnerable;
+    }
+
+    // 🔹 Función para teletransportar al jugador
+void TeleportPlayer()
+{
+    if (teleportDestination != null)
+    {
+        transform.position = teleportDestination.position;
+        count = 0; // 🔹 Reiniciar el contador al teletransportarse
+        SetCountText(); // 🔹 Actualizar el UI del contador
+        winTextObject.SetActive(false); // 🔹 Ocultar el mensaje de victoria de la primera zona
+        hasTeleported = true; // 🔹 Marcar que el jugador ya se teletransportó
+
+        if (enemy2 != null)
+        {
+            enemy2.SetActive(true); // Activa el segundo castor
+        }
+    }
+    else
+    {
+        Debug.LogWarning("No se ha asignado un destino de teletransporte.");
+    }
+}
 }
