@@ -11,6 +11,8 @@ public class PlayerController : MonoBehaviour
     private float movementX;
     private float movementY;
     public float speed = 0;
+    public float jumpForce = 4f;
+    private bool canJump = false;
     public TextMeshProUGUI countText;
     public GameObject winTextObject;
     
@@ -44,6 +46,15 @@ public class PlayerController : MonoBehaviour
         movementY = movementVector.y;
     }
 
+    void Update()
+    {
+        // 🔹 Si presiona ESPACIO y puede saltar, aplica la fuerza de salto
+        if (Keyboard.current.spaceKey.wasPressedThisFrame && canJump)
+        {
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            canJump = false; // 🔹 Desactivar el salto hasta que vuelva al suelo
+        }
+    }
 void SetCountText()
 {
     countText.text = "Score: " + count.ToString();
@@ -103,6 +114,16 @@ void SetCountText()
         }
     }
 
+    // 🔹 Detecta si toca el suelo
+void OnCollisionEnter(Collision collision)
+{
+    if (collision.gameObject.CompareTag("Ground"))
+    {
+        Debug.Log("Jugador tocó el suelo"); // 🔹 Verifica si detecta el suelo
+        canJump = true; // 🔹 Permitir saltar de nuevo
+    }
+}
+
     IEnumerator Invulnerability()
     {
         isInvulnerable = true;
@@ -151,6 +172,8 @@ void TeleportPlayer()
         {
             enemy2.SetActive(true); // Activa el segundo castor
         }
+
+        canJump = true; // 🔹 Permitir saltar después de teletransportarse
     }
     else
     {
