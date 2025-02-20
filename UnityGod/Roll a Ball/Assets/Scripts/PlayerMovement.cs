@@ -12,7 +12,7 @@ public class PlayerController : MonoBehaviour
     private float movementY;
     public float speed = 0;
     public float jumpForce = 4f;
-    private bool canJump = false;
+    // private bool canJump = false;
     private bool isMoving = false;
     public TextMeshProUGUI countText;
     public GameObject winTextObject;
@@ -68,16 +68,16 @@ public class PlayerController : MonoBehaviour
         UpdateState();
     }
 
-    void Update()
-    {
-        if (Keyboard.current.spaceKey.wasPressedThisFrame && canJump)
-        {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-            canJump = false;
-            currentState = PlayerState.Jumping;
-            UpdateState();
-        }
-    }
+    //void Update()
+    //{
+    //    if (Keyboard.current.spaceKey.wasPressedThisFrame && canJump)
+    //    {
+    //       rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+    //        canJump = false;
+    //        currentState = PlayerState.Jumping;
+    //        UpdateState();
+    //    }
+    //}
     void SetCountText()
     {
         countText.text = "Score: " + count.ToString();
@@ -104,8 +104,16 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        Vector3 movement = new Vector3(movementX, 0.0f, movementY);
-        rb.AddForce(movement * speed);
+        //Vector3 movement = new Vector3(movementX, 0.0f, movementY);
+        //rb.AddForce(movement * speed);
+        Vector3 dir = Vector3.zero;
+        dir.x = -Input.acceleration.y;
+        dir.z = Input.acceleration.x;
+        if (dir.sqrMagnitude > 1)
+            dir.Normalize();
+        
+        dir *= Time.deltaTime;
+        transform.Translate(dir * speed);
 
         // Si el jugador deja de moverse, volvemos a Idle
         if (!isMoving && !isInvulnerable && currentState != PlayerState.Jumping)
@@ -144,7 +152,7 @@ public class PlayerController : MonoBehaviour
             FinalWin();        
         }
     }
-    void OnCollisionEnter(Collision collision)
+    /*void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Ground"))
         {
@@ -156,7 +164,7 @@ public class PlayerController : MonoBehaviour
                 UpdateState();
             }
         }
-    }
+    }*/
 
     IEnumerator Invulnerability()
     {
@@ -212,7 +220,7 @@ public class PlayerController : MonoBehaviour
                 enemy2.SetActive(true);
             }
 
-            canJump = true;
+            // canJump = true;
         }
         else
         {
